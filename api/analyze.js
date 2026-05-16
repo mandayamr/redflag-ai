@@ -72,7 +72,7 @@ CONTEXT: ${ctx || 'None'}`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 2000,
+        max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMsg }]
       })
@@ -89,11 +89,20 @@ CONTEXT: ${ctx || 'None'}`;
     const textBlock = data.content.filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('');
     const clean = textBlock.replace(/```json|```/g, '').trim();
 
+    // Find JSON by locating first { and last }
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1) {
+      res.status(200).json({ error: 'No JSON found in response. Raw: ' + clean.substring(0, 300) });
+      return;
+    }
+    const jsonStr = clean.substring(firstBrace, lastBrace + 1);
+
     try {
-      const parsed = JSON.parse(clean);
+      const parsed = JSON.parse(jsonStr);
       res.status(200).json({ result: parsed });
     } catch(parseErr) {
-      res.status(200).json({ error: 'Could not parse AI response. Raw: ' + clean.substring(0, 300) });
+      res.status(200).json({ error: 'JSON parse failed: ' + parseErr.message + ' | Raw: ' + jsonStr.substring(0, 300) });
     }
 
   } catch(e) {
