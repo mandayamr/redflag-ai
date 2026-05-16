@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedFlag AI — Export End-User Risk Screener</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0f12;color:#e2e4ec;min-height:100vh;font-size:14px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.hd{display:flex;align-items:center;gap:12px;margin-bottom:1.75rem}
+.logo{width:36px;height:36px;background:#c0392b;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0}
+h1{font-size:20px;font-weight:600;color:#e2e4ec;letter-spacing:-0.02em}
+.sub{font-size:12px;color:#8a8fa8;margin-top:2px}
+.sec{background:#161820;border:1px solid #23262f;border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.sec-title{font-size:10px;color:#6b6f82;font-family:monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.625rem;border-bottom:1px solid #23262f}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+label{font-size:11px;color:#8a8fa8;font-family:monospace;letter-spacing:.03em}
+input,select,textarea{background:#1c1f27;border:1px solid #2a2d38;border-radius:6px;padding:9px 12px;color:#e2e4ec;font-size:13px;font-family:inherit;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#c0392b}
+select option{background:#1c1f27}
+textarea{resize:vertical;min-height:72px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem}
+.pill{padding:5px 12px;border:1px solid #2a2d38;border-radius:20px;cursor:pointer;font-size:12px;color:#8a8fa8;background:#1c1f27;user-select:none;transition:all .12s}
+.pill.on{background:rgba(192,57,43,.15);border-color:#c0392b;color:#e74c3c}
+.btn-main{width:100%;padding:13px;background:#c0392b;color:#fff;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;margin-bottom:1rem;font-family:inherit}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.btn-sec{padding:10px 18px;background:#1c1f27;color:#8a8fa8;border:1px solid #2a2d38;border-radius:7px;cursor:pointer;font-size:13px;font-family:inherit}
+.err{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.4);border-radius:7px;padding:10px 14px;font-size:13px;color:#e74c3c;margin-bottom:1rem;display:none}
+.spinner-wrap{text-align:center;padding:2rem;display:none}
+.spinner{width:28px;height:28px;border:2px solid #23262f;border-top-color:#c0392b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-msg{font-size:12px;color:#8a8fa8;font-family:monospace}
+#results{display:none}
+.badge{display:inline-block;font-size:10px;font-family:monospace;padding:2px 9px;border-radius:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.card{background:#161820;border:1px solid #23262f;border-radius:9px;padding:1rem;margin-bottom:.75rem}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.card-name{font-size:10px;font-family:monospace;color:#6b6f82;letter-spacing:.05em;text-transform:uppercase}
+.finding{font-size:13px;color:#e2e4ec;line-height:1.5;margin-bottom:5px}
+.muted{font-size:12px;color:#8a8fa8;line-height:1.5}
+.tag{font-size:10px;font-family:monospace;padding:2px 9px;border-radius:10px;background:#1c1f27;border:1px solid #2a2d38;color:#555a70;display:inline-block;margin:2px 2px 0 0}
+.company-card{background:#0d0f12;border:1px solid #2a2d38;border-radius:8px;padding:1rem;margin-bottom:.625rem}
+.company-name{font-size:14px;font-weight:600;color:#e2e4ec;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.company-row{display:flex;gap:8px;margin-bottom:5px;font-size:12px}
+.company-label{color:#555a70;font-family:monospace;min-width:70px;flex-shrink:0}
+.company-val{color:#8a8fa8}
+.company-val a{color:#4a9eff;text-decoration:none}
+.company-val a:hover{text-decoration:underline}
+@media(max-width:600px){.grid,.card-grid{grid-template-columns:1fr}.field.full{grid-column:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <div class="logo">RF</div>
+    <div>
+      <h1>RedFlag AI</h1>
+      <p class="sub">Export end-user risk screening — AI-powered with real company lookup</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">Entity information</div>
+    <div class="grid">
+      <div class="field"><label>Company / entity name *</label><input type="text" id="entity" placeholder="e.g. Meridian Technologies Ltd" /></div>
+      <div class="field"><label>Destination country *</label>
+        <select id="country">
+          <option value="">Select country...</option>
+          <option>Afghanistan</option><option>Belarus</option><option>Brazil</option><option>China</option><option>Cuba</option><option>Egypt</option><option>Germany</option><option>India</option><option>Iran</option><option>Iraq</option><option>Japan</option><option>Malaysia</option><option>Mexico</option><option>Myanmar</option><option>North Korea</option><option>Pakistan</option><option>Russia</option><option>Saudi Arabia</option><option>Singapore</option><option>South Korea</option><option>Sudan</option><option>Syria</option><option>Taiwan</option><option>Turkey</option><option>UAE</option><option>Ukraine</option><option>United Kingdom</option><option>Venezuela</option><option>Vietnam</option><option>Yemen</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field full"><label>Owner / principal names</label><input type="text" id="owners" placeholder="e.g. John Smith, Ahmad Al-Rashid — all known owners or directors" /></div>
+      <div class="field"><label>Stated business type</label><input type="text" id="biz" placeholder="e.g. private security firm, distributor" /></div>
+      <div class="field"><label>Company age</label>
+        <select id="age">
+          <option value="">Select...</option>
+          <option>Less than 1 year</option><option>1-2 years</option><option>3-5 years</option><option>6-10 years</option><option>Over 10 years</option><option>Unknown / unverifiable</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">Transaction details</div>
+    <div class="grid">
+      <div class="field"><label>Product / technology *</label><input type="text" id="product" placeholder="e.g. dual-use sensors, radiation detection equipment" /></div>
+      <div class="field"><label>Stated end-use *</label><input type="text" id="enduse" placeholder="e.g. civilian airport security screening" /></div>
+      <div class="field"><label>Payment routing</label>
+        <select id="pay">
+          <option value="">Select...</option>
+          <option>Direct from end-user</option><option>Through third-party intermediary</option><option>Through a third country</option><option>Cash / wire from unknown account</option><option>Multiple fragmented payments</option><option>Standard — no concerns</option>
+        </select>
+      </div>
+      <div class="field"><label>Order quantity vs. stated need</label>
+        <select id="qty">
+          <option value="">Select...</option>
+          <option>Proportionate to stated use</option><option>Slightly higher than expected</option><option>Significantly higher than expected</option><option>Cannot verify / unclear</option>
+        </select>
+      </div>
+      <div class="field"><label>Prior transaction history</label>
+        <select id="hist">
+          <option value="">Select...</option>
+          <option>Established customer, verified history</option><option>New customer, referred by known party</option><option>New customer, no prior history</option><option>Previously flagged in screening</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">Additional behavioral indicators — click all that apply</div>
+    <div class="pills">
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="No verifiable web presence or address">No web presence</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Unusual shipping route or transshipment point">Unusual routing</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Name similar to known flagged entity">Name similarity</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Reluctant to provide end-use certificate">Reluctant EUC</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Price-insensitive with no negotiation">Price-insensitive</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Unusual urgency to complete transaction">Unusual urgency</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Product does not match stated business type">Product mismatch</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Freight forwarder listed as ultimate consignee">Freight forwarder consignee</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="Address matches registered agent or virtual office">Registered agent address</div>
+      <div class="pill" onclick="this.classList.toggle('on')" data-v="No verifiable employees or operational history">No verifiable employees</div>
+    </div>
+    <div class="field"><label>Additional context (optional)</label><textarea id="ctx" placeholder="Referral source, circumstances, known associations..."></textarea></div>
+  </div>
+
+  <div class="err" id="err"></div>
+  <button class="btn-main" id="btn" onclick="runAnalysis()">Run full risk screening →</button>
+
+  <div class="spinner-wrap" id="loading">
+    <div class="spinner"></div>
+    <div class="load-msg" id="load-msg">Searching company records...</div>
+  </div>
+
+  <div id="results"></div>
+</div>
+
+<script>
+var STEPS=['Searching company records and ownership data...','Checking sanctions lists and violation history...','Screening owner / principal names...','Analyzing behavioral red flags...','Generating compliance recommendation...'];
+function g(id){return document.getElementById(id)}
+function showErr(msg){var e=g('err');e.textContent=msg;e.style.display='block'}
+function hideErr(){g('err').style.display='none'}
+
+function badgeColor(level){
+  var l=(level||'').toUpperCase();
+  if(['HIGH','NOT_FOUND','LIKELY_SHELL'].indexOf(l)>-1)return'#c0392b';
+  if(['MEDIUM','UNVERIFIED'].indexOf(l)>-1)return'#d68910';
+  if(['LOW','CLEAR','CONFIRMED'].indexOf(l)>-1)return'#1e8449';
+  return'#555a70';
+}
+function badge(level,label){
+  var col=badgeColor(level);
+  return'<span class="badge" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'55">'+(label||level||'—')+'</span>';
+}
+
+async function runAnalysis(){
+  hideErr();
+  var entity=g('entity').value.trim();
+  var country=g('country').value;
+  var product=g('product').value.trim();
+  var enduse=g('enduse').value.trim();
+  if(!entity){showErr('Entity name is required.');return}
+  if(!country){showErr('Destination country is required.');return}
+  if(!product){showErr('Product description is required.');return}
+  if(!enduse){showErr('Stated end-use is required.');return}
+
+  var sigs=Array.from(document.querySelectorAll('.pill.on')).map(function(p){return p.dataset.v}).join('; ')||'None';
+
+  g('btn').disabled=true;
+  g('loading').style.display='block';
+  g('results').style.display='none';
+
+  var si=0; g('load-msg').textContent=STEPS[0];
+  var iv=setInterval(function(){si=Math.min(si+1,STEPS.length-1);g('load-msg').textContent=STEPS[si]},2000);
+
+  try{
+    var response=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        entity:entity, country:country, product:product, enduse:enduse,
+        owners:g('owners').value.trim(), biz:g('biz').value.trim(),
+        age:g('age').value, pay:g('pay').value, qty:g('qty').value,
+        hist:g('hist').value, ctx:g('ctx').value.trim(), sigs:sigs
+      })
+    });
+    clearInterval(iv);
+    var data=await response.json();
+    if(data.error){showErr('Error: '+(typeof data.error==='object'?JSON.stringify(data.error):data.error)+(data.raw?' | '+data.raw:''));return}
+    renderResult(data.result,entity,country);
+  }catch(e){
+    clearInterval(iv);
+    showErr('Request failed: '+e.message);
+  }finally{
+    g('btn').disabled=false;
+    g('loading').style.display='none';
+  }
+}
+
+function renderResult(r,entity,country){
+  var level=r.overallRisk||'MEDIUM';
+  var score=Math.min(100,Math.max(0,parseInt(r.riskScore)||50));
+  var col=badgeColor(level);
+  var ts=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var existMap={CONFIRMED:'Confirmed',UNVERIFIED:'Unverified',LIKELY_SHELL:'Likely shell',NOT_FOUND:'Not found'};
+
+  // Company matches section
+  var companiesHtml='';
+  if(r.companyMatches&&r.companyMatches.length>0){
+    companiesHtml='<div class="sec" style="margin-top:1.25rem"><div class="sec-title">Companies found matching "'+entity+'"</div>';
+    r.companyMatches.forEach(function(co){
+      companiesHtml+='<div class="company-card">';
+      companiesHtml+='<div class="company-name">'+co.name+' '+badge(co.matchConfidence,''+co.matchConfidence+' match')+'</div>';
+      if(co.address)companiesHtml+='<div class="company-row"><span class="company-label">Address</span><span class="company-val">'+co.address+'</span></div>';
+      if(co.website)companiesHtml+='<div class="company-row"><span class="company-label">Website</span><span class="company-val"><a href="'+co.website+'" target="_blank">'+co.website+'</a></span></div>';
+      if(co.owners)companiesHtml+='<div class="company-row"><span class="company-label">Owners</span><span class="company-val">'+co.owners+'</span></div>';
+      if(co.registrationInfo)companiesHtml+='<div class="company-row"><span class="company-label">Registration</span><span class="company-val">'+co.registrationInfo+'</span></div>';
+      if(co.notes)companiesHtml+='<div class="company-row"><span class="company-label">Notes</span><span class="company-val">'+co.notes+'</span></div>';
+      companiesHtml+='</div>';
+    });
+    companiesHtml+='</div>';
+  }
+
+  var metaCards=[
+    {l:'Entity exists',v:existMap[r.entityExists]||'Unverified',lv:r.entityExists},
+    {l:'Shell risk',v:r.shellRisk||'CLEAR',lv:r.shellRisk},
+    {l:'Company violations',v:r.companyViolations||'CLEAR',lv:r.companyViolations},
+    {l:'Owner violations',v:r.ownerViolations||'UNKNOWN',lv:r.ownerViolations}
+  ].map(function(m){
+    return'<div style="background:#0d0f12;border-radius:7px;padding:9px 11px"><div style="font-size:9px;font-family:monospace;color:#555a70;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase">'+m.l+'</div>'+badge(m.lv,m.v)+'</div>';
+  }).join('');
+
+  var detailCards=[
+    {t:'Shell company analysis',x:r.shellFindings,l:r.shellRisk},
+    {t:'Company violation history',x:r.companyViolationsDetail,l:r.companyViolations},
+    {t:'Owner / principal screening',x:r.ownerViolationsDetail,l:r.ownerViolations},
+    {t:'Entity existence',x:r.entityExistsReason,l:r.entityExists}
+  ].map(function(d){
+    return'<div class="card"><div class="card-hd"><div class="card-name">'+d.t+'</div>'+badge(d.l)+'</div><div class="muted">'+( d.x||'No data')+'</div></div>';
+  }).join('');
+
+  var signalCards=(r.signals||[]).map(function(s){
+    return'<div class="card"><div class="card-hd"><div class="card-name">'+s.name+'</div>'+badge(s.level)+'</div><div class="finding">'+s.finding+'</div><div class="muted">'+s.reasoning+'</div></div>';
+  }).join('');
+
+  var regs=(r.regulatoryBasis||[]).map(function(t){return'<span class="tag">'+t+'</span>'}).join('');
+
+  g('results').innerHTML=
+    '<div class="card" style="border-color:'+col+'44;background:'+col+'08;margin-top:1.25rem">'+
+      '<div style="display:flex;align-items:flex-start;gap:1.25rem;margin-bottom:1rem">'+
+        '<div style="width:76px;height:76px;border-radius:50%;border:3px solid '+col+';display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;color:'+col+'">'+
+          '<div style="font-size:22px;font-weight:600;line-height:1;font-family:monospace">'+score+'</div>'+
+          '<div style="font-size:9px;letter-spacing:.05em;margin-top:2px">/100</div>'+
+        '</div>'+
+        '<div style="flex:1">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'+badge(level,level+' RISK')+'<span style="font-size:11px;color:#555a70;font-family:monospace">'+entity+' · '+country+' · '+ts+'</span></div>'+
+          '<div style="font-size:15px;font-weight:600;color:#e2e4ec;margin-bottom:6px">'+(r.headline||'')+'</div>'+
+          '<div style="font-size:13px;color:#8a8fa8;line-height:1.6">'+(r.executiveSummary||'')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'+metaCards+'</div>'+
+    '</div>'+
+
+    companiesHtml+
+
+    '<div class="card-grid">'+detailCards+'</div>'+
+    '<div class="card-grid">'+signalCards+'</div>'+
+
+    '<div class="card">'+
+      '<div class="card-hd"><div class="card-name">Compliance analyst reasoning</div></div>'+
+      '<div class="muted" style="line-height:1.8;margin-bottom:.75rem">'+(r.detailedReasoning||'')+'</div>'+
+      '<div>'+regs+'</div>'+
+    '</div>'+
+
+    '<div class="card" style="background:'+col+'08;border-color:'+col+'44;margin-bottom:1rem">'+
+      '<div style="font-size:10px;font-family:monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;color:'+col+'">Recommended action</div>'+
+      '<div class="muted">'+(r.recommendation||'')+'</div>'+
+    '</div>'+
+
+    '<button class="btn-sec" onclick="resetForm()">New screening</button>';
+
+  g('results').style.display='block';
+  g('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function resetForm(){
+  ['entity','owners','biz','product','enduse','ctx'].forEach(function(id){g(id).value=''});
+  ['country','age','pay','qty','hist'].forEach(function(id){g(id).value=''});
+  document.querySelectorAll('.pill.on').forEach(function(p){p.classList.remove('on')});
+  g('results').style.display='none';
+  hideErr();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
